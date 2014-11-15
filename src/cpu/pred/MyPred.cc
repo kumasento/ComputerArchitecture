@@ -40,13 +40,11 @@
  * Authors: Kevin Lim
  */
 
-// hawd
-//hello
 #include "base/bitfield.hh"
 #include "base/intmath.hh"
 #include "cpu/pred/MyPred.hh"
-#include <iostream>
-using namespace std;
+#include "debug/Branch.hh"
+
 MyBP::MyBP(const Params *params)
     : BPredUnit(params),
       localPredictorSize(params->localPredictorSize),
@@ -64,7 +62,6 @@ MyBP::MyBP(const Params *params)
       choiceCtrBits(params->choiceCtrBits),
       instShiftAmt(params->instShiftAmt)
 {
-	std::cout<<"My Predictor is now running!"<<endl;
     if (!isPowerOf2(localPredictorSize)) {
         fatal("Invalid local predictor size!\n");
     }
@@ -362,10 +359,16 @@ MyBP::update(Addr branch_addr, bool taken, void *bp_history,
 }
 
 bool
-MyBP::predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
-                          int asid, TheISA::PCState &instPC,
-                          TheISA::PCState &predPC, ThreadID tid)
+MyBP::predictInOrder(StaticInstPtr &inst, 
+                     const InstSeqNum &seqNum,
+                     int asid, 
+                     TheISA::PCState &instPC,
+                     TheISA::PCState &predPC, 
+                     ThreadID tid)
 {
+    DPRINTF(Branch, "[tid:%i] [sn:%i] %s ... PC %s doing branch "
+            "prediction: Hello World!\n", tid, seqNum,
+            inst->disassemble(instPC.instAddr()), instPC);
 	return true;
 }
 

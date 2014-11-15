@@ -89,7 +89,7 @@ class BPredUnit : public SimObject
      */
     bool predict(StaticInstPtr &inst, const InstSeqNum &seqNum,
                  TheISA::PCState &pc, ThreadID tid);
-    bool predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
+    virtual bool predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
                         int asid, TheISA::PCState &instPC, TheISA::PCState &predPC,
                         ThreadID tid);
 

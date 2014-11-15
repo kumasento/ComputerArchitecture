@@ -45,6 +45,7 @@ BranchPredictorParams::create()
     } else if (predType == "tournament") {
         return new TournamentBP(this);
     } else if (predType == "MyPred") {
+        printf("[DEBUG] predType is %s\n", predType.c_str());
         return new MyBP(this); // HERE!     
     } else {
         fatal("Invalid BP selected!");

@@ -244,7 +244,6 @@ BPredUnit::predict(StaticInstPtr &inst, const InstSeqNum &seqNum,
 
     return pred_taken;
 }
-
 bool
 BPredUnit::predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
                           int asid, TheISA::PCState &instPC,
@@ -262,7 +261,7 @@ BPredUnit::predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
 
     ++lookups;
     DPRINTF(Branch, "[tid:%i] [sn:%i] %s ... PC %s doing branch "
-            "prediction\n", tid, seqNum,
+            "prediction: This is bpred_unit_impl\n", tid, seqNum,
             inst->disassemble(instPC.instAddr()), instPC);
 
     void *bp_history = NULL;
@@ -364,7 +363,6 @@ BPredUnit::predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
 
     return pred_taken;
 }
-
 void
 BPredUnit::update(const InstSeqNum &done_sn, ThreadID tid)
 {

@@ -276,7 +276,7 @@
                     "peer": "system.cpu.dcache.cpu_side", 
                     "role": "MASTER"
                 }, 
-                "max_insts_any_thread": 1000000, 
+                "max_insts_any_thread": 1000, 
                 "threadModel": "SMT", 
                 "progress_interval": 0.0, 
                 "activity": 0, 
