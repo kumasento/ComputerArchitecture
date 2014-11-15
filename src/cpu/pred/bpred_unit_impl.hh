@@ -1,46 +1,3 @@
-/*
- * Copyright (c) 2011-2012 ARM Limited
- * Copyright (c) 2010 The University of Edinburgh
- * Copyright (c) 2012 Mark D. Hill and David A. Wood
- * All rights reserved
- *
- * The license below extends only to copyright in the software and shall
- * not be construed as granting a license to any other intellectual
- * property including but not limited to intellectual property relating
- * to a hardware implementation of the functionality of the software
- * licensed hereunder.  You may use the software subject to the license
- * terms below provided that you ensure that this notice is replicated
- * unmodified and in its entirety in all distributions of the software,
- * modified or unmodified, in source code or in binary form.
- *
- * Copyright (c) 2004-2005 The Regents of The University of Michigan
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met: redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer;
- * redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution;
- * neither the name of the copyright holders nor the names of its
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Authors: Kevin Lim
- */
 
 #ifndef __CPU_PRED_BPRED_UNIT_IMPL_HH__
 #define __CPU_PRED_BPRED_UNIT_IMPL_HH__
@@ -54,6 +11,9 @@
 #include "config/the_isa.hh"
 #include "cpu/pred/bpred_unit.hh"
 #include "debug/Branch.hh"
+
+#define BPredImpl
+//#define AlwaysNextInst
 
 BPredUnit::BPredUnit(const Params *params)
     : SimObject(params),
@@ -248,121 +208,13 @@ bool
 BPredUnit::predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
                           int asid, TheISA::PCState &instPC,
                           TheISA::PCState &predPC, ThreadID tid)
-{
-    // See if branch predictor predicts taken.
-    // If so, get its target addr either from the BTB or the RAS.
-    // Save off record of branch stuff so the RAS can be fixed
-    // up once it's done.
+#ifdef BPredImpl
+#include "BPredImpl.hh"
+#elif defined AlwaysNextInst
+#include "AlwaysNextInst.hh"
+#endif
 
-    using TheISA::MachInst;
 
-    bool pred_taken = false;
-    TheISA::PCState target;
-
-    ++lookups;
-    DPRINTF(Branch, "[tid:%i] [sn:%i] %s ... PC %s doing branch "
-            "prediction: This is bpred_unit_impl\n", tid, seqNum,
-            inst->disassemble(instPC.instAddr()), instPC);
-
-    void *bp_history = NULL;
-
-    if (inst->isUncondCtrl()) {
-        DPRINTF(Branch, "[tid:%i] Unconditional control.\n", tid);
-        pred_taken = true;
-        // Tell the BP there was an unconditional branch.
-        uncondBranch(bp_history);
-
-        if (inst->isReturn() && RAS[tid].empty()) {
-            DPRINTF(Branch, "[tid:%i] RAS is empty, predicting "
-                    "false.\n", tid);
-            pred_taken = false;
-        }
-    } else {
-        ++condPredicted;
-
-        pred_taken = lookup(predPC.instAddr(), bp_history);
-    }
-
-    PredictorHistory predict_record(seqNum, predPC.instAddr(), pred_taken,
-                                    bp_history, tid);
-
-    // Now lookup in the BTB or RAS.
-    if (pred_taken) {
-        if (inst->isReturn()) {
-            ++usedRAS;
-
-            // If it's a function return call, then look up the address
-            // in the RAS.
-            TheISA::PCState rasTop = RAS[tid].top();
-            target = TheISA::buildRetPC(instPC, rasTop);
-
-            // Record the top entry of the RAS, and its index.
-            predict_record.usedRAS = true;
-            predict_record.RASIndex = RAS[tid].topIdx();
-            predict_record.RASTarget = rasTop;
-
-            assert(predict_record.RASIndex < 16);
-
-            RAS[tid].pop();
-
-            DPRINTF(Branch, "[tid:%i]: Instruction %s is a return, "
-                    "RAS predicted target: %s, RAS index: %i.\n",
-                    tid, instPC, target,
-                    predict_record.RASIndex);
-        } else {
-            ++BTBLookups;
-
-            if (inst->isCall()) {
-
-                RAS[tid].push(instPC);
-                predict_record.pushedRAS = true;
-
-                // Record that it was a call so that the top RAS entry can
-                // be popped off if the speculation is incorrect.
-                predict_record.wasCall = true;
-
-                DPRINTF(Branch, "[tid:%i]: Instruction %s was a call"
-                        ", adding %s to the RAS index: %i.\n",
-                        tid, instPC, predPC,
-                        RAS[tid].topIdx());
-            }
-
-            if (inst->isCall() &&
-                inst->isUncondCtrl() &&
-                inst->isDirectCtrl()) {
-                target = inst->branchTarget(instPC);
-            } else if (BTB.valid(predPC.instAddr(), asid)) {
-                ++BTBHits;
-
-                // If it's not a return, use the BTB to get the target addr.
-                target = BTB.lookup(predPC.instAddr(), asid);
-
-                DPRINTF(Branch, "[tid:%i]: [asid:%i] Instruction %s "
-                        "predicted target is %s.\n",
-                        tid, asid, instPC, target);
-            } else {
-                DPRINTF(Branch, "[tid:%i]: BTB doesn't have a "
-                        "valid entry, predicting false.\n",tid);
-                pred_taken = false;
-            }
-        }
-    }
-
-    if (pred_taken) {
-        // Set the PC and the instruction's predicted target.
-        predPC = target;
-    }
-    DPRINTF(Branch, "[tid:%i]: [sn:%i]: Setting Predicted PC to %s.\n",
-            tid, seqNum, predPC);
-
-    predHist[tid].push_front(predict_record);
-
-    DPRINTF(Branch, "[tid:%i] [sn:%i] pushed onto front of predHist "
-            "...predHist.size(): %i\n",
-            tid, seqNum, predHist[tid].size());
-
-    return pred_taken;
-}
 void
 BPredUnit::update(const InstSeqNum &done_sn, ThreadID tid)
 {
