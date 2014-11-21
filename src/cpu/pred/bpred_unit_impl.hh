@@ -12,8 +12,9 @@
 #include "cpu/pred/bpred_unit.hh"
 #include "debug/Branch.hh"
 
-#define BPredImpl
+//#define BPredImpl
 //#define AlwaysNextInst
+#define AlwaysMoveInst
 
 BPredUnit::BPredUnit(const Params *params)
     : SimObject(params),
@@ -209,9 +210,11 @@ BPredUnit::predictInOrder(StaticInstPtr &inst, const InstSeqNum &seqNum,
                           int asid, TheISA::PCState &instPC,
                           TheISA::PCState &predPC, ThreadID tid)
 #ifdef BPredImpl
-#include "BPredImpl.hh"
+#   include "BPredImpl.hh"
 #elif defined AlwaysNextInst
-#include "AlwaysNextInst.hh"
+#   include "AlwaysNextInst.hh"
+#elif defined AlwaysMoveInst
+#   include "AlwaysMoveInst.hh"
 #endif
 
 
