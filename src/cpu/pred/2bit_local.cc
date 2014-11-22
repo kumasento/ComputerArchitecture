@@ -33,6 +33,7 @@
 #include "base/trace.hh"
 #include "cpu/pred/2bit_local.hh"
 #include "debug/Fetch.hh"
+#include "debug/Branch.hh"
 
 LocalBP::LocalBP(const Params *params)
     : BPredUnit(params),

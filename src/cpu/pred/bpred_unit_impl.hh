@@ -12,9 +12,9 @@
 #include "cpu/pred/bpred_unit.hh"
 #include "debug/Branch.hh"
 
-//#define BPredImpl
+#define BPredImpl
 //#define AlwaysNextInst
-#define AlwaysMoveInst
+//#define AlwaysMoveInst
 
 BPredUnit::BPredUnit(const Params *params)
     : SimObject(params),

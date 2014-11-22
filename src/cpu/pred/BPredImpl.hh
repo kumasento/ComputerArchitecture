@@ -29,7 +29,7 @@
         }
     } else {
         ++condPredicted;
-
+        
         pred_taken = lookup(predPC.instAddr(), bp_history);
     }
 
