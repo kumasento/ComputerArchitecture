@@ -104,7 +104,7 @@ LocalBP::lookup(Addr branch_addr, void * &bp_history)
 
     taken = getPrediction(counter_val);
 
-#if 0
+#if 1
     // Speculative update.
     if (taken) {
         DPRINTF(Fetch, "Branch updated as taken.\n");
