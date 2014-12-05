@@ -1,201 +1,169 @@
-# Copyright (c) 2012-2013 ARM Limited
-# All rights reserved.
-#
-# The license below extends only to copyright in the software and shall
-# not be construed as granting a license to any other intellectual
-# property including but not limited to intellectual property relating
-# to a hardware implementation of the functionality of the software
-# licensed hereunder.  You may use the software subject to the license
-# terms below provided that you ensure that this notice is replicated
-# unmodified and in its entirety in all distributions of the software,
-# modified or unmodified, in source code or in binary form.
-#
-# Copyright (c) 2006-2008 The Regents of The University of Michigan
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met: redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer;
-# redistributions in binary form must reproduce the above copyright
-# notice, this list of conditions and the following disclaimer in the
-# documentation and/or other materials provided with the distribution;
-# neither the name of the copyright holders nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-# Authors: Steve Reinhardt
+# configuration scrpts learning
+# from blank
 
-# Simple test script
-#
-# "m5 test.py"
-
+# import everything needed
 import optparse
 import sys
 import os
-
 import m5
 from m5.defines import buildEnv
 from m5.objects import *
-from m5.util import addToPath, fatal
+from m5.util import addToPath
 
 addToPath('../common')
-addToPath('../ruby')
 
 import Options
-import Ruby
 import Simulation
 import CacheConfig
-import MemConfig
 from Caches import *
-from cpu2000 import *
 import spec2006
+import MemConfig
 
-def get_processes(options):
-    """Interprets provided options and returns a list of processes"""
-
-    multiprocesses = []
-    inputs = []
-    outputs = []
-    errouts = []
-    pargs = []
-
-    workloads = options.cmd.split(';')
-    if options.input != "":
-        inputs = options.input.split(';')
-    if options.output != "":
-        outputs = options.output.split(';')
-    if options.errout != "":
-        errouts = options.errout.split(';')
-    if options.options != "":
-        pargs = options.options.split(';')
-
-    idx = 0
-    for wrkld in workloads:
-        process = LiveProcess()
-        process.executable = wrkld
-        process.cwd = os.getcwd()
-
-        if len(pargs) > idx:
-            process.cmd = [wrkld] + pargs[idx].split()
-        else:
-            process.cmd = [wrkld]
-
-        if len(inputs) > idx:
-            process.input = inputs[idx]
-        if len(outputs) > idx:
-            process.output = outputs[idx]
-        if len(errouts) > idx:
-            process.errout = errouts[idx]
-
-        multiprocesses.append(process)
-        idx += 1
-
-    if options.smt:
-        assert(options.cpu_type == "detailed" or options.cpu_type == "inorder")
-        return multiprocesses, idx
-    else:
-        return multiprocesses, 1
-
-
+# insert self defination options
 parser = optparse.OptionParser()
 Options.addCommonOptions(parser)
 Options.addSEOptions(parser)
+(options, args) = parser.parse_args() 
+#print help(options)
 
-if '--ruby' in sys.argv:
-    Ruby.define_options(parser)
+#option setting
 
-(options, args) = parser.parse_args()
+##options.cpu_type = 'detailed'
+#options.cpu_type = 'inorder'
+## arm_detailed uses the o3_ARM_v7a cache, else Cache.
+#options.caches = 'caches'
+##options.l1d_size = '64kB' #'32kB'
+##options.l1i_size = '64kB' #'32kB'
+#options.l1d_size = '1024B' #'32kB'
+#options.l1i_size = '1024B' #'32kB'
+#
+##options.l2cache = 'True'
+##options.l2_size = '1MB' #'2MB' #'512kB'
+#options.l2cache = 'True'
+#options.l2_size = '1kB' #'2MB' #'512kB'
+#
+#options.l3cache = 'True'
+#options.l3_size = '8MB'
 
-if args:
-    print "Error: script doesn't take any positional arguments"
-    sys.exit(1)
+#system setting after options setting
 
+apps = []
 multiprocesses = []
 numThreads = 1
 
 if options.bench:
     apps = options.bench.split("-")
-    if len(apps) != options.num_cpus:
-        print "number of benchmarks not equal to set num_cpus!"
-        sys.exit(1)
-    apps = options.bench.split("-")
     for app in apps:
-        if app == 'bzip2':
+#       pdb.set_trace()
+        if app == '400.perlbench':
+            process = spec2006.perlbench()
+        elif app == '401.bzip2':
             process = spec2006.bzip2()
-        elif app == 'gcc':
+        elif app == '403.gcc':
             process = spec2006.gcc()
-        elif app == 'bwaves':
+        elif app == '410.bwaves':
             process = spec2006.bwaves()
+        elif app == '416.gamess':
+            process = spec2006.gamess()
+        elif app == '429.mcf':
+            process = spec2006.mcf()
+        elif app == '433.milc':
+            process = spec2006.milc()
+        elif app == '434.zeusmp':
+            process = spec2006.zeusmp()
+        elif app == '435.gromacs':
+            process = spec2006.gromacs()
+        elif app == '436.cactusADM':
+            process = spec2006.cactusADM()
+        elif app == '437.leslie3d':
+            process = spec2006.leslie3d()
+        elif app == '444.namd':
+            process = spec2006.namd()
+        elif app == '445.gobmk':
+            process = spec2006.gobmk()
+        elif app == '450.soplex':
+            process = spec2006.soplex()
+        elif app == '453.povray':
+            process = spec2006.povray()
+        elif app == '454.calculix':
+            process = spec2006.calculix()
+        elif app == '456.hmmer':
+            process = spec2006.hmmer()
+        elif app == '458.sjeng':
+            process = spec2006.sjeng()
+        elif app == '459.GemsFDTD':
+            process = spec2006.GemsFDTD()
+        elif app == '462.libquantum':
+            process = spec2006.libquantum()
+        elif app == '464.h264ref':
+            process = spec2006.h264ref()
+        elif app == '465.tonto':
+            process = spec2006.tonto()
+        elif app == '470.lbm':
+            process = spec2006.lbm()
+        elif app == '471.omnetpp':
+            process = spec2006.omnetpp()
+        elif app == '473.astar':
+            process = spec2006.astar()
+        elif app == '481.wrf':
+            process = spec2006.wrf()
+        elif app == '482.sphinx3':
+            process = spec2006.sphinx3()
+        elif app == '998.specrand':
+            process = spec2006.specrand_i()
+        elif app == '999.specrand':
+            process = spec2006.specrand_f()
+        #else:
+            #process = LiveProcess()
+            #process.executable = '/home/chao/Research/gem5_stable/tests/test-progs/myhello/'+app
+            #process.cmd = [process.executable]
+
         else:
             print "unkown benchamarks"
             sys.exit(1)
         multiprocesses.append(process)
-elif options.cmd:
-    multiprocesses, numThreads = get_processes(options)
-else:
-    print >> sys.stderr, "No workload specified. Exiting!\n"
-    sys.exit(1)
-
 
 (CPUClass, test_mem_mode, FutureClass) = Simulation.setCPUClass(options)
 CPUClass.numThreads = numThreads
-
-# Check -- do not allow SMT with multiple CPUs
-if options.smt and options.num_cpus > 1:
-    fatal("You cannot use SMT with multiple CPUs!")
-
 np = options.num_cpus
 system = System(cpu = [CPUClass(cpu_id=i) for i in xrange(np)],
                 mem_mode = test_mem_mode,
                 mem_ranges = [AddrRange(options.mem_size)],
                 cache_line_size = options.cacheline_size)
+        
 
-# Create a top-level voltage domain
 system.voltage_domain = VoltageDomain(voltage = options.sys_voltage)
 
-# Create a source clock for the system and set the clock period
 system.clk_domain = SrcClockDomain(clock =  options.sys_clock,
                                    voltage_domain = system.voltage_domain)
 
-# Create a CPU voltage domain
+
 system.cpu_voltage_domain = VoltageDomain()
 
-# Create a separate clock domain for the CPUs
 system.cpu_clk_domain = SrcClockDomain(clock = options.cpu_clock,
                                        voltage_domain =
                                        system.cpu_voltage_domain)
 
-# All cpus belong to a common cpu_clk_domain, therefore running at a common
-# frequency.
 for cpu in system.cpu:
     cpu.clk_domain = system.cpu_clk_domain
 
 # Sanity check
-if options.fastmem:
-    if CPUClass != AtomicSimpleCPU:
-        fatal("Fastmem can only be used with atomic CPU!")
-    if (options.caches or options.l2cache):
-        fatal("You cannot use fastmem in combination with caches!")
+if options.fastmem and (options.caches or options.l2cache):
+    fatal("You cannot use fastmem in combination with caches!")
 
-if options.simpoint_profile:
-    if not options.fastmem:
-        # Atomic CPU checked with fastmem option already
-        fatal("SimPoint generation should be done with atomic cpu and fastmem")
-    if np > 1:
-        fatal("SimPoint generation not supported with more than one CPUs")
+# assign workload
+if options.smt:
+    assert(options.cpu_type == "detailed" or options.cpu_type == "inorder")
+
+#
+#if options.num_cpus > 1 and options.smt == False:
+#    for i in xrange(np):
+#        system.cpu[i].workload = multiprocesses[i]
+#elif options.num_cpus == 1 and options.smt == True:
+#    system.cpu[0].createThreads()
+#    system.cpu[0].workload = multiprocesses
+#elif options.num_cpus == 1:
+#    system.cpu[0].workload = multiprocesses[0]
 
 for i in xrange(np):
     if options.smt:
@@ -217,43 +185,18 @@ for i in xrange(np):
 
     system.cpu[i].createThreads()
 
-if options.ruby:
-    if not (options.cpu_type == "detailed" or options.cpu_type == "timing"):
-        print >> sys.stderr, "Ruby requires TimingSimpleCPU or O3CPU!!"
-        sys.exit(1)
 
-    # Use SimpleMemory with the null option since this memory is only used
-    # for determining which addresses are within the range of the memory.
-    # No space allocation is required.
-    system.physmem = SimpleMemory(range=AddrRange(options.mem_size),
-                              null = True)
-    options.use_map = True
-    Ruby.create_system(options, system)
-    assert(options.num_cpus == len(system.ruby._cpu_ports))
+#Run
+#root = Root(full_system = False, system = system)
+#m5.instantiate(root)
+#exit_event = m5.simulate()
+#print 'Exiting @ tick', m5.curTich(), 'because', exit_event.getCause()
 
-    for i in xrange(np):
-        ruby_port = system.ruby._cpu_ports[i]
-
-        # Create the interrupt controller and connect its ports to Ruby
-        # Note that the interrupt controller is always present but only
-        # in x86 does it have message ports that need to be connected
-        system.cpu[i].createInterruptController()
-
-        # Connect the cpu's cache ports to Ruby
-        system.cpu[i].icache_port = ruby_port.slave
-        system.cpu[i].dcache_port = ruby_port.slave
-        if buildEnv['TARGET_ISA'] == 'x86':
-            system.cpu[i].interrupts.pio = ruby_port.master
-            system.cpu[i].interrupts.int_master = ruby_port.slave
-            system.cpu[i].interrupts.int_slave = ruby_port.master
-            system.cpu[i].itb.walker.port = ruby_port.slave
-            system.cpu[i].dtb.walker.port = ruby_port.slave
-else:
-    MemClass = Simulation.setMemClass(options)
-    system.membus = CoherentBus()
-    system.system_port = system.membus.slave
-    CacheConfig.config_cache(options, system)
-    MemConfig.config_mem(options, system)
+MemClass = Simulation.setMemClass(options)
+system.membus = CoherentBus()
+system.system_port = system.membus.slave
+CacheConfig.config_cache(options, system)
+MemConfig.config_mem(options, system)
 
 root = Root(full_system = False, system = system)
 Simulation.run(options, root, system, FutureClass)

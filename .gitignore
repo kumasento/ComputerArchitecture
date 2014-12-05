@@ -1,4 +1,6 @@
-build/*
+gem5-proj/build/*
 archive/*
+data/*
+spec/*
 .*
 out.txt
