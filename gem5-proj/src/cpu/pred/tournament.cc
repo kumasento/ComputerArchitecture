@@ -144,6 +144,15 @@ TournamentBP::calcLocHistIdx(Addr &branch_addr)
     return (branch_addr >> instShiftAmt) & (localHistoryTableSize - 1);
 }
 
+// historyRegisterMask is based on globalHistoryBits
+// if globalHistoryBits is 10
+// then historyRegisterMask is (1<<10)-1 -> 1111111111
+// 
+// globalHistory will be initialized as 0
+// if Taken, then g = 11
+// if not Taken, then g = 10
+// That is, every prediction will change the state of current global predictor
+
 inline
 void
 TournamentBP::updateGlobalHistTaken()
