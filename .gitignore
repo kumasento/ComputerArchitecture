@@ -1,6 +1,14 @@
+
+# build 
 gem5-proj/build/*
+
+# old files
 archive/*
-data/*
+
+# useless data
+data/tmp.*
+
+# benchmarks
 spec/*
+
 .*
-out.txt
